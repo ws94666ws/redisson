@@ -2,10 +2,7 @@ package org.redisson;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.DeletedObjectListener;
-import org.redisson.api.ExpiredObjectListener;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
 import org.redisson.client.*;
 import org.redisson.client.protocol.RedisCommands;
 import org.redisson.config.Config;
@@ -22,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 public class RedissonLockTest extends BaseConcurrentTest {
-
     static class LockWithoutBoolean extends Thread {
         private CountDownLatch latch;
         private RedissonClient redisson;
@@ -495,6 +491,43 @@ public class RedissonLockTest extends BaseConcurrentTest {
         thread1.start();
         thread1.join();
         lock.unlock();
+    }
+
+    @Test
+    public void testConcurrencyTryLockUnLock() throws InterruptedException {
+        Redisson client =  (Redisson) redisson;
+
+        AtomicBoolean emptyLockSet = new AtomicBoolean();
+
+        RLock instrumentedLock = new RedissonLock(client.getCommandExecutor(), "1testConcurrencyTryLockUnLock") {
+            @Override
+            public RFuture<Void> unlockAsync(long threadId) {
+                if (renewalScheduler.isLockSetEmpty()) {
+                    // Expect lock set is not empty exists before unlocking, but found empty.
+                    // Thus, background renewal task cannot see this lock name to refresh ttl
+                    emptyLockSet.set(true);
+                }
+                return super.unlockAsync(threadId);
+            }
+        };
+
+        int threads = 16;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threads);
+        for (int i = 0; i < threads; i++) {
+            executorService.submit(() -> {
+                for (int k = 0; k < 10_000; k++) {
+                    if (instrumentedLock.tryLock()) {
+                        instrumentedLock.unlock();
+                    }
+                }
+            });
+        }
+
+        executorService.shutdown();
+        executorService.awaitTermination(100, TimeUnit.SECONDS);
+
+        assertThat(emptyLockSet.get()).isFalse();
     }
 
 

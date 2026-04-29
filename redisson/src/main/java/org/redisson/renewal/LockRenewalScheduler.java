@@ -80,4 +80,16 @@ public final class LockRenewalScheduler {
         }
     }
 
+    /**
+     * For testing only
+     *
+     * @return <code>false</code> if there are any lock names in the task, <code>true</code> otherwise
+     */
+    public boolean isLockSetEmpty() {
+        LockTask task = reference.get();
+        if (task != null) {
+            return task.name2entry.isEmpty();
+        }
+        return true;
+    }
 }
