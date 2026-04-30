@@ -35,7 +35,6 @@ import org.redisson.misc.CompletableFutureWrapper;
 import org.redisson.misc.CompositeAsyncIterator;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 /**

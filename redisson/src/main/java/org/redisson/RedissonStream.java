@@ -15,11 +15,9 @@
  */
 package org.redisson;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
-import org.redisson.api.*;
+import org.redisson.api.ObjectListener;
+import org.redisson.api.RFuture;
+import org.redisson.api.RStream;
 import org.redisson.api.listener.*;
 import org.redisson.api.stream.*;
 import org.redisson.client.codec.Codec;
@@ -29,7 +27,9 @@ import org.redisson.client.protocol.RedisCommands;
 import org.redisson.client.protocol.StreamEntryStatus;
 import org.redisson.client.protocol.decoder.*;
 import org.redisson.command.CommandAsyncExecutor;
-import org.redisson.misc.CompletableFutureWrapper;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 
