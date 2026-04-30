@@ -221,6 +221,20 @@ public final class RedissonReactive implements RedissonReactiveClient {
     }
 
     @Override
+    public RLockReactive getNonReentrantLock(String name) {
+        return ReactiveProxyBuilder.create(commandExecutor,
+                new RedissonNonReentrantLock(commandExecutor, name), RLockReactive.class);
+    }
+
+    @Override
+    public RLockReactive getNonReentrantLock(CommonOptions options) {
+        CommonParams params = (CommonParams) options;
+        CommandReactiveExecutor ca = commandExecutor.copy(params);
+        return ReactiveProxyBuilder.create(commandExecutor,
+                new RedissonNonReentrantLock(ca, params.getName()), RLockReactive.class);
+    }
+
+    @Override
     public RFencedLockReactive getFencedLock(String name) {
         RedissonFencedLock lock = new RedissonFencedLock(commandExecutor, name);
         return ReactiveProxyBuilder.create(commandExecutor, lock, RFencedLockReactive.class);

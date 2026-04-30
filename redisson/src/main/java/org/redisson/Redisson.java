@@ -620,6 +620,17 @@ public final class Redisson implements RedissonClient {
     }
 
     @Override
+    public RLock getNonReentrantLock(String name) {
+        return new RedissonNonReentrantLock(commandExecutor, name);
+    }
+
+    @Override
+    public RLock getNonReentrantLock(CommonOptions options) {
+        CommonParams params = (CommonParams) options;
+        return new RedissonNonReentrantLock(commandExecutor.copy(params), params.getName());
+    }
+
+    @Override
     public RFencedLock getFencedLock(String name) {
         return new RedissonFencedLock(commandExecutor, name);
     }

@@ -220,6 +220,20 @@ public final class RedissonRx implements RedissonRxClient {
     }
 
     @Override
+    public RLockRx getNonReentrantLock(String name) {
+        return RxProxyBuilder.create(commandExecutor,
+                new RedissonNonReentrantLock(commandExecutor, name), RLockRx.class);
+    }
+
+    @Override
+    public RLockRx getNonReentrantLock(CommonOptions options) {
+        CommonParams params = (CommonParams) options;
+        CommandRxExecutor ce = commandExecutor.copy(params);
+        return RxProxyBuilder.create(commandExecutor,
+                new RedissonNonReentrantLock(ce, params.getName()), RLockRx.class);
+    }
+
+    @Override
     public RFencedLockRx getFencedLock(String name) {
         RedissonFencedLock lock = new RedissonFencedLock(commandExecutor, name);
         return RxProxyBuilder.create(commandExecutor, lock, RFencedLockRx.class);

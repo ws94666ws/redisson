@@ -315,6 +315,34 @@ public interface RedissonRxClient {
     RLockRx getSpinLock(String name, LockOptions.BackOff backOff);
 
     /**
+     * Returns a non-reentrant Lock instance by name.
+     * <p>
+     * Unlike {@link #getLock(String)}, attempts by the same thread to acquire
+     * the lock while it already holds it cause {@link IllegalMonitorStateException}
+     * for both {@code lock()} and {@code tryLock()}.
+     * <p>
+     * Implements a <b>non-fair</b> locking so doesn't guarantee an acquire order by threads.
+     *
+     * @param name name of object
+     * @return Lock object
+     */
+    RLockRx getNonReentrantLock(String name);
+
+    /**
+     * Returns a non-reentrant Lock instance with specified <code>options</code>.
+     * <p>
+     * Unlike {@link #getLock(CommonOptions)}, attempts by the same thread to acquire
+     * the lock while it already holds it cause {@link IllegalMonitorStateException}
+     * for both {@code lock()} and {@code tryLock()}.
+     * <p>
+     * Implements a <b>non-fair</b> locking so doesn't guarantee an acquire order by threads.
+     *
+     * @param options instance options
+     * @return Lock object
+     */
+    RLockRx getNonReentrantLock(CommonOptions options);
+
+    /**
      * Returns Fenced Lock by name.
      * <p>
      * Implements a <b>non-fair</b> locking so doesn't guarantee an acquire order by threads.
