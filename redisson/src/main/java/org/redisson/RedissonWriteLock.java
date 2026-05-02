@@ -74,7 +74,7 @@ public class RedissonWriteLock extends RedissonLock implements RLock {
     }
 
     @Override
-    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, int timeout) {
+    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, long timeout) {
         return evalWriteSyncedNoRetryAsync(getRawName(), LongCodec.INSTANCE, RedisCommands.EVAL_BOOLEAN,
           "local val = redis.call('get', KEYS[3]); " +
                 "if val ~= false then " +

@@ -232,7 +232,7 @@ public class RedissonFairLock extends RedissonLock implements RLock {
     }
 
     @Override
-    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, int timeout) {
+    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, long timeout) {
         return evalWriteSyncedNoRetryAsync(getRawName(), LongCodec.INSTANCE, RedisCommands.EVAL_BOOLEAN,
           "local val = redis.call('get', KEYS[5]); " +
                 "if val ~= false then " +

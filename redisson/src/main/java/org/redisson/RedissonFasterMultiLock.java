@@ -468,7 +468,7 @@ public class RedissonFasterMultiLock extends RedissonBaseLock {
 
 
     @Override
-    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, int timeout) {
+    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, long timeout) {
         List<Object> params = new ArrayList<>();
         params.add(getLockName(threadId));
         params.add(LockPubSub.UNLOCK_MESSAGE);

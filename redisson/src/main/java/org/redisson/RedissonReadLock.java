@@ -79,7 +79,7 @@ public class RedissonReadLock extends RedissonLock implements RLock {
     }
 
     @Override
-    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, int timeout) {
+    protected RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, long timeout) {
         String timeoutPrefix = getReadWriteTimeoutNamePrefix(threadId);
         String keyPrefix = getKeyPrefix(threadId, timeoutPrefix);
 

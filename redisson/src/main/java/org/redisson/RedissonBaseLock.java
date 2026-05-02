@@ -213,7 +213,7 @@ public abstract class RedissonBaseLock extends RedissonExpirable implements RLoc
         return prefixName("redisson_unlock_latch", getRawName()) + ":" + requestId;
     }
 
-    protected abstract RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, int timeout);
+    protected abstract RFuture<Boolean> unlockInnerAsync(long threadId, String requestId, long timeout);
 
     protected final RFuture<Boolean> unlockInnerAsync(long threadId, String requestId) {
         if (requestId == null) {
@@ -222,7 +222,7 @@ public abstract class RedissonBaseLock extends RedissonExpirable implements RLoc
         MasterSlaveServersConfig config = getServiceManager().getConfig();
         long timeout = (config.getTimeout() + config.getRetryDelay().calcDelay(config.getRetryAttempts()).toMillis()) * config.getRetryAttempts();
         timeout = Math.max(timeout, 1);
-        RFuture<Boolean> r = unlockInnerAsync(threadId, requestId, (int) timeout);
+        RFuture<Boolean> r = unlockInnerAsync(threadId, requestId, timeout);
         String id = requestId;
         CompletionStage<Boolean> ff = r.thenApply(v -> {
             CommandAsyncExecutor ce = commandExecutor;
