@@ -33,6 +33,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static org.redisson.client.protocol.RedisCommands.LINDEX;
+import static org.redisson.client.protocol.RedisCommands.LLEN_INT;
+
 /**
  *
  * @author Nikita Koksharov
@@ -158,7 +161,7 @@ public class RedissonPriorityQueue<V> extends BaseRedissonList<V> implements RPr
         try {
             checkComparator();
     
-            BinarySearchResult<V> res = binarySearch(value);
+            BinarySearchResult<V> res = binarySearch(value, false);
             int index = 0;
             if (res.getIndex() < 0) {
                 index = -(res.getIndex() + 1);
@@ -180,6 +183,25 @@ public class RedissonPriorityQueue<V> extends BaseRedissonList<V> implements RPr
         } finally {
             lock.unlock();
         }
+    }
+
+    V getValue(int index) {
+        return getValue(index, false);
+    }
+
+    V getValue(int index, boolean readOnlyMode) {
+        if (readOnlyMode) return get(commandExecutor.readAsync(getRawName(), codec, LINDEX, getRawName(), index));
+        return get(commandExecutor.writeAsync(getRawName(), codec, LINDEX, getRawName(), index));
+    }
+
+    @Override
+    public int size() {
+        return get(sizeAsync());
+    }
+
+    int size(boolean readOnlyMode) {
+        if (readOnlyMode) return get(commandExecutor.readAsync(getRawName(), codec, LLEN_INT, getRawName()));
+        return get(commandExecutor.writeAsync(getRawName(), codec, LLEN_INT, getRawName()));
     }
 
     private void checkComparator() {
@@ -372,16 +394,21 @@ public class RedissonPriorityQueue<V> extends BaseRedissonList<V> implements RPr
         }
         return value;
     }
+
+    public BinarySearchResult<V> binarySearch(V value) {
+        return binarySearch(value, true);
+    }
     
     // TODO optimize: get three values each time instead of single
-    public BinarySearchResult<V> binarySearch(V value) {
-        int size = size();
+    public BinarySearchResult<V> binarySearch(V value,  boolean readOnlyMode) {
+        int size = size(readOnlyMode);
         int upperIndex = size - 1;
         int lowerIndex = 0;
         while (lowerIndex <= upperIndex) {
             int index = lowerIndex + (upperIndex - lowerIndex) / 2;
 
-            V res = getValue(index);
+            V res = getValue(index, readOnlyMode);
+
             if (res == null) {
                 return new BinarySearchResult<V>();
             }
