@@ -95,23 +95,13 @@ public class RedisClientTest  {
         c.sync((RedisCommands.CLIENT_TRACKING), "ON", "BCAST");
         AtomicInteger counter = new AtomicInteger();
         ChannelName cn = new ChannelName("__redis__:invalidate");
-        c.addListener(cn, new RedisPubSubListener<String>() {
-            @Override
-            public void onMessage(CharSequence channel, String msg) {
-                counter.incrementAndGet();
-            }
-        });
+        c.addListener(cn, (RedisPubSubListener<String>) (channel, msg) -> counter.incrementAndGet());
         c.subscribe(StringCodec.INSTANCE, cn).get();
         c.sync(RedisCommands.GET, "test");
 
         RedisPubSubConnection c4 = redisClient.connectPubSub();
         c4.sync((RedisCommands.CLIENT_TRACKING), "ON", "BCAST");
-        c4.addListener(cn, new RedisPubSubListener<String>() {
-            @Override
-            public void onMessage(CharSequence channel, String msg) {
-                counter.incrementAndGet();
-            }
-        });
+        c4.addListener(cn, (RedisPubSubListener<String>) (channel, msg) -> counter.incrementAndGet());
         c4.subscribe(StringCodec.INSTANCE, cn).get();
         c4.sync(RedisCommands.GET, "test");
 
@@ -137,23 +127,13 @@ public class RedisClientTest  {
         c.sync((RedisCommands.CLIENT_TRACKING), "ON");
         AtomicInteger counter = new AtomicInteger();
         ChannelName cn = new ChannelName("__redis__:invalidate");
-        c.addListener(cn, new RedisPubSubListener<String>() {
-            @Override
-            public void onMessage(CharSequence channel, String msg) {
-                counter.incrementAndGet();
-            }
-        });
+        c.addListener(cn, (RedisPubSubListener<String>) (channel, msg) -> counter.incrementAndGet());
         c.subscribe(StringCodec.INSTANCE, cn).get();
         c.sync(RedisCommands.GET, "test");
 
         RedisPubSubConnection c4 = redisClient.connectPubSub();
         c4.sync((RedisCommands.CLIENT_TRACKING), "ON");
-        c4.addListener(cn, new RedisPubSubListener<String>() {
-            @Override
-            public void onMessage(CharSequence channel, String msg) {
-                counter.incrementAndGet();
-            }
-        });
+        c4.addListener(cn, (RedisPubSubListener<String>) (channel, msg) -> counter.incrementAndGet());
         c4.subscribe(StringCodec.INSTANCE, cn).get();
         c4.sync(RedisCommands.GET, "test");
 
