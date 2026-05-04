@@ -17,6 +17,7 @@ package org.redisson;
 
 import org.redisson.api.*;
 import org.redisson.api.listener.ScoredSortedSetAddListener;
+import org.redisson.api.listener.ScoredSortedSetIncrListener;
 import org.redisson.api.listener.ScoredSortedSetRemoveListener;
 import org.redisson.api.listener.TrackingListener;
 import org.redisson.api.mapreduce.RCollectionMapReduce;
@@ -2208,6 +2209,9 @@ public class RedissonScoredSortedSet<V> extends RedissonExpirable implements RSc
         if (listener instanceof ScoredSortedSetRemoveListener) {
             return addListener("__keyevent@*:zrem", (ScoredSortedSetRemoveListener) listener, ScoredSortedSetRemoveListener::onRemove);
         }
+        if (listener instanceof ScoredSortedSetIncrListener) {
+            return addListener("__keyevent@*:zincr", (ScoredSortedSetIncrListener) listener, ScoredSortedSetIncrListener::onIncrement);
+        }
         if (listener instanceof TrackingListener) {
             return addTrackingListener((TrackingListener) listener);
         }
@@ -2223,6 +2227,9 @@ public class RedissonScoredSortedSet<V> extends RedissonExpirable implements RSc
         if (listener instanceof ScoredSortedSetRemoveListener) {
             return addListenerAsync("__keyevent@*:zrem", (ScoredSortedSetRemoveListener) listener, ScoredSortedSetRemoveListener::onRemove);
         }
+        if (listener instanceof ScoredSortedSetIncrListener) {
+            return addListenerAsync("__keyevent@*:zincr", (ScoredSortedSetIncrListener) listener, ScoredSortedSetIncrListener::onIncrement);
+        }
         if (listener instanceof TrackingListener) {
             return addTrackingListenerAsync((TrackingListener) listener);
         }
@@ -2233,14 +2240,14 @@ public class RedissonScoredSortedSet<V> extends RedissonExpirable implements RSc
     @Override
     public void removeListener(int listenerId) {
         removeTrackingListener(listenerId);
-        removeListener(listenerId, "__keyevent@*:zadd", "__keyevent@*:zrem");
+        removeListener(listenerId, "__keyevent@*:zadd", "__keyevent@*:zrem", "__keyevent@*:zincr");
         super.removeListener(listenerId);
     }
 
     @Override
     public RFuture<Void> removeListenerAsync(int listenerId) {
         return removeListenerAsync(removeTrackingListenerAsync(listenerId), listenerId,
-                "__keyevent@*:zadd", "__keyevent@*:zrem");
+                "__keyevent@*:zadd", "__keyevent@*:zrem", "__keyevent@*:zincr");
     }
 
 }
