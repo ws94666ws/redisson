@@ -251,12 +251,27 @@ public abstract class RedissonObject implements RObject {
                     }
                     RFuture<byte[]> dumpFuture = commandExecutor.readAsync(sourceKey, ByteArrayCodec.INSTANCE, RedisCommands.DUMP, sourceKey);
                     return dumpFuture.thenCompose(dumpBytes -> {
-                        long ttlMs = ttl >= 0 ? ttl : 0;
-                        Object[] args = replace
-                                ? new Object[]{destKey, ttlMs, dumpBytes, "REPLACE"}
-                                : new Object[]{destKey, ttlMs, dumpBytes};
-                        return commandExecutor.writeAsync(destKey, StringCodec.INSTANCE, RedisCommands.RESTORE, args)
-                                .thenApply(v -> true);
+                        CompletionStage<Void> restoreFuture;
+                        if (!replace) {
+                            RFuture<Boolean> existsFuture = commandExecutor.readAsync(destKey, StringCodec.INSTANCE, RedisCommands.EXISTS, destKey);
+                            restoreFuture = existsFuture.thenCompose(exists -> {
+                                if (exists) {
+                                    return CompletableFuture.completedFuture(null);
+                                }
+                                long ttlMs = 0;
+                                if (ttl >= 0) {
+                                    ttlMs = ttl;
+                                }
+                                return commandExecutor.writeAsync(destKey, StringCodec.INSTANCE, RedisCommands.RESTORE, destKey, ttlMs, dumpBytes);
+                            });
+                        } else {
+                            long ttlMs = 0;
+                            if (ttl >= 0) {
+                                ttlMs = ttl;
+                            }
+                            restoreFuture = commandExecutor.writeAsync(destKey, StringCodec.INSTANCE, RedisCommands.RESTORE, destKey, ttlMs, dumpBytes, "REPLACE");
+                        }
+                        return restoreFuture.thenApply(v -> true);
                     });
                 });
             });
