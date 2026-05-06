@@ -190,6 +190,13 @@ public abstract class RedissonObject implements RObject {
 
     protected final RFuture<Boolean> copyAsync(CommandAsyncExecutor commandExecutor, List<Object> keys,
                                                 int database, boolean replace) {
+        int pairCount = keys.size() / 2;
+        if (getServiceManager().getCfg().isClusterConfig()
+                && commandExecutor.getConnectionManager().calcSlot((String) keys.get(pairCount))
+                    != commandExecutor.getConnectionManager().calcSlot((String) keys.get(0))) {
+            return executeDumpRestoreCopy(commandExecutor, keys, replace);
+        }
+
         if (keys.size() == 2) {
             List<Object> args = new ArrayList<>();
             args.add(keys.get(0));
@@ -225,7 +232,37 @@ public abstract class RedissonObject implements RObject {
                     + "return math.min(res, 1); ",
                     keys,
                     database, Boolean.compare(replace, false));
+    }
 
+    private RFuture<Boolean> executeDumpRestoreCopy(CommandAsyncExecutor commandExecutor, List<Object> keys,
+                                                     boolean replace) {
+        int pairCount = keys.size() / 2;
+        CompletableFuture<Boolean> result = CompletableFuture.completedFuture(false);
+
+        for (int i = 0; i < pairCount; i++) {
+            String sourceKey = (String) keys.get(i);
+            String destKey = (String) keys.get(pairCount + i);
+
+            result = result.thenCompose(prevRes -> {
+                RFuture<Long> pttlFuture = commandExecutor.readAsync(sourceKey, StringCodec.INSTANCE, RedisCommands.PTTL, sourceKey);
+                return pttlFuture.thenCompose(ttl -> {
+                    if (ttl == -2) {
+                        return CompletableFuture.completedFuture(prevRes);
+                    }
+                    RFuture<byte[]> dumpFuture = commandExecutor.readAsync(sourceKey, ByteArrayCodec.INSTANCE, RedisCommands.DUMP, sourceKey);
+                    return dumpFuture.thenCompose(dumpBytes -> {
+                        long ttlMs = ttl >= 0 ? ttl : 0;
+                        Object[] args = replace
+                                ? new Object[]{destKey, ttlMs, dumpBytes, "REPLACE"}
+                                : new Object[]{destKey, ttlMs, dumpBytes};
+                        return commandExecutor.writeAsync(destKey, StringCodec.INSTANCE, RedisCommands.RESTORE, args)
+                                .thenApply(v -> true);
+                    });
+                });
+            });
+        }
+
+        return new CompletableFutureWrapper<>(result);
     }
 
     protected final RFuture<Void> renameAsync(CommandAsyncExecutor commandExecutor, List<Object> keys, Runnable runnable) {
