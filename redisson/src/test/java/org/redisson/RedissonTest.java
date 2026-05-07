@@ -1236,7 +1236,7 @@ public class RedissonTest extends RedisDockerTest {
         });
         config.useSingleServer()
                 .setDnsMonitoringInterval(2000)
-                .setDnsMonitoringTimes(5)
+                .setDnsMonitoringTimes(10)
                 .setAddress("redis://masterhost:" + CONTAINER.getFirstMappedPort());
 
         RedissonClient cc = Redisson.create(config);
@@ -1287,7 +1287,7 @@ public class RedissonTest extends RedisDockerTest {
         });
         config.useMasterSlaveServers()
                 .setDnsMonitoringInterval(2000)
-                .setDnsMonitoringTimes(5)
+                .setDnsMonitoringTimes(10)
                 .setMasterAddress("redis://masterhost:" + CONTAINER.getFirstMappedPort())
                 .addSlaveAddress("redis://slavehost:" + CONTAINER.getFirstMappedPort());
 
