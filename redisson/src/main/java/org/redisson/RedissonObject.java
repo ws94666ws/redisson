@@ -290,10 +290,6 @@ public abstract class RedissonObject implements RObject {
             if (ttl > 0) {
                 ttlMs = ttl;
             }
-            int replaceFlag = 0;
-            if (replace) {
-                replaceFlag = 1;
-            };
 
             return commandExecutor.evalWriteAsync(
                     destKey, StringCodec.INSTANCE, RedisCommands.EVAL_BOOLEAN,
@@ -306,7 +302,7 @@ public abstract class RedissonObject implements RObject {
                             + "end; "
                             + "return 0 ",
                     Collections.singletonList(destKey),
-                    replaceFlag, ttlMs, dumpBytes);
+                    Boolean.compare(replace, false), ttlMs, dumpBytes);
         });
 
         return new CompletableFutureWrapper<>(stage);
